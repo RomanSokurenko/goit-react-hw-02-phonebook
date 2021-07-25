@@ -1,25 +1,77 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { Component } from 'react';
+import Container from './Container';
+import shortid from 'shortid';
+import Form from './Form';
+import Contacts from './Contacts';
+import initialContacts from './Contacts/initialContacts.json';
+import Filter from './Filter';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+class App extends Component {
+  state = {
+    contacts: initialContacts,
+    filter: '',
+  };
+
+  formSubmitHandler = ({ name, number }) => {
+    const { contacts } = this.state;
+    if (contacts.some(contact => contact.name === name)) {
+      alert(
+        `${name
+          .split(' ')
+          .map(string => string.charAt(0).toUpperCase() + string.slice(1))
+          .join(
+            ' ',
+          )} is already in contacts. Change contact's name or delete old.`,
+      );
+      return;
+    }
+    const contact = {
+      id: shortid.generate(),
+      name,
+      number,
+    };
+
+    this.setState(({ contacts }) => ({
+      contacts: [contact, ...contacts],
+    }));
+  };
+
+  deleteContact = contactId => {
+    this.setState(prevState => ({
+      contacts: prevState.contacts.filter(contact => contact.id !== contactId),
+    }));
+  };
+
+  changeFilter = e => {
+    this.setState({ filter: e.currentTarget.value });
+  };
+
+  getVisibleContact = () => {
+    const { filter, contacts } = this.state;
+    const normalizedFilter = filter.toLowerCase();
+
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(normalizedFilter),
+    );
+  };
+
+  render() {
+    const { filter } = this.state;
+    const visibleContacts = this.getVisibleContact();
+
+    return (
+      <Container>
+        <h1>Phonebook</h1>
+        <Form onSubmit={this.formSubmitHandler} />
+        <h2>Contacts</h2>
+        <Filter value={filter} onChange={this.changeFilter} />
+        <Contacts
+          contacts={visibleContacts}
+          onDeleteContact={this.deleteContact}
+        />
+      </Container>
+    );
+  }
 }
 
 export default App;
